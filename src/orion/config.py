@@ -29,6 +29,38 @@ class OrionConfig:
 
 CONFIG: Final[OrionConfig] = OrionConfig()
 
+JPL_HORIZONS_BRONZE_COLUMNS: Final[tuple[str, ...]] = (
+    "ingestion_run_id",
+    "source_system",
+    "source_endpoint",
+    "request_url",
+    "request_params_json",
+    "response_status_code",
+    "response_body",
+    "response_hash",
+    "ingested_at",
+    "ingested_date",
+    "mission_name",
+    "mission_start_date",
+    "mission_end_date",
+)
+
+JPL_HORIZONS_BRONZE_COLUMN_TYPES: Final[tuple[tuple[str, str], ...]] = (
+    ("ingestion_run_id", "string"),
+    ("source_system", "string"),
+    ("source_endpoint", "string"),
+    ("request_url", "string"),
+    ("request_params_json", "string"),
+    ("response_status_code", "int"),
+    ("response_body", "string"),
+    ("response_hash", "string"),
+    ("ingested_at", "timestamp"),
+    ("ingested_date", "date"),
+    ("mission_name", "string"),
+    ("mission_start_date", "date"),
+    ("mission_end_date", "date"),
+)
+
 
 def full_table_name(schema: str, table_name: str) -> str:
     """
@@ -57,3 +89,23 @@ def schema_name(layer: str) -> str:
         raise ValueError(f"Unknown layer '{layer}'. Valid layers: {valid_layers}")
 
     return layer_map[layer]
+
+
+def bronze_table_name(table_name: str) -> str:
+    return full_table_name(CONFIG.bronze_schema, table_name)
+
+
+def silver_table_name(table_name: str) -> str:
+    return full_table_name(CONFIG.silver_schema, table_name)
+
+
+def gold_table_name(table_name: str) -> str:
+    return full_table_name(CONFIG.gold_schema, table_name)
+
+
+def audit_table_name(table_name: str) -> str:
+    return full_table_name(CONFIG.audit_schema, table_name)
+
+
+def config_table_name(table_name: str) -> str:
+    return full_table_name(CONFIG.config_schema, table_name)
