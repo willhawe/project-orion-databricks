@@ -203,19 +203,48 @@ def align_silver_dataframe(silver_df):
     )
 
 
+def silver_event_natural_key_expression() -> str:
+    return """
+        COALESCE(
+          event_id,
+          CONCAT_WS(
+            '|',
+            event_type,
+            COALESCE(CAST(event_time AS STRING), ''),
+            COALESCE(class_type, ''),
+            COALESCE(location, ''),
+            COALESCE(source_location, '')
+          )
+        )
+    """
+
+
+def build_deduplicated_insert_sql(*, source_view: str, target_table: str) -> str:
+    column_list = ", ".join(f"`{column}`" for column in DONKI_SPACE_WEATHER_SILVER_COLUMNS)
+    natural_key_expression = silver_event_natural_key_expression()
+
+    return f"""
+    INSERT INTO {target_table} ({column_list})
+    SELECT {column_list}
+    FROM (
+      SELECT
+        *,
+        ROW_NUMBER() OVER (
+          PARTITION BY mission_name, event_type, {natural_key_expression}
+          ORDER BY bronze_ingested_at DESC, source_ingestion_run_id DESC, source_response_hash DESC
+        ) AS row_number
+      FROM `{source_view}`
+    )
+    WHERE row_number = 1
+    """
+
+
 def insert_silver_dataframe(spark, aligned_df, target_table: str) -> None:
     temp_view = f"tmp_donki_space_weather_events_{uuid.uuid4().hex}"
-    column_list = ", ".join(f"`{column}`" for column in DONKI_SPACE_WEATHER_SILVER_COLUMNS)
 
     aligned_df.createOrReplaceTempView(temp_view)
     try:
-        spark.sql(
-            f"""
-            INSERT INTO {target_table} ({column_list})
-            SELECT {column_list}
-            FROM `{temp_view}`
-            """
-        )
+        spark.sql(build_deduplicated_insert_sql(source_view=temp_view, target_table=target_table))
     finally:
         spark.catalog.dropTempView(temp_view)
 
@@ -265,9 +294,7 @@ def transform_donki_space_weather(
             "silver_records_written": 0,
         }
 
-    source_ids = sorted({record["source_ingestion_run_id"] for record in records})
-    quoted_ids = ", ".join(f"'{source_id}'" for source_id in source_ids)
-    spark.sql(f"DELETE FROM {target_table} WHERE source_ingestion_run_id IN ({quoted_ids})")
+    spark.sql(f"DELETE FROM {target_table} WHERE mission_name = '{CONFIG.mission_name}'")
 
     silver_df = create_silver_dataframe(spark, records)
     aligned_df = align_silver_dataframe(silver_df)

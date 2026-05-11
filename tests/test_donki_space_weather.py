@@ -5,6 +5,7 @@ from src.orion.config import (
     DONKI_SPACE_WEATHER_SILVER_COLUMN_TYPES,
 )
 from src.orion.transforms.donki_space_weather import (
+    build_deduplicated_insert_sql,
     donki_space_weather_events_table_name,
     parse_donki_events,
     parse_donki_timestamp,
@@ -121,3 +122,15 @@ def test_donki_space_weather_events_table_name():
 
 def test_donki_space_weather_silver_column_types_align_with_columns():
     assert tuple(column for column, _ in DONKI_SPACE_WEATHER_SILVER_COLUMN_TYPES) == DONKI_SPACE_WEATHER_SILVER_COLUMNS
+
+
+def test_build_deduplicated_insert_sql_uses_event_identity_and_latest_bronze_row():
+    sql = build_deduplicated_insert_sql(source_view="tmp_events", target_table="silver.events")
+
+    assert "INSERT INTO silver.events" in sql
+    assert "ROW_NUMBER() OVER" in sql
+    assert "PARTITION BY mission_name, event_type" in sql
+    assert "COALESCE(" in sql
+    assert "event_id" in sql
+    assert "ORDER BY bronze_ingested_at DESC" in sql
+    assert "WHERE row_number = 1" in sql
