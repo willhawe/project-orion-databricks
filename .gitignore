@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# macOS
+.DS_Store
+
 # C extensions
 *.so
 
@@ -149,8 +152,12 @@ activemq-data/
 
 # Environments
 .env
+.env.*
 .envrc
-.venv
+.venv/
+databricks.env
+.databricks/*.env
+**/.databricks/sync-snapshots/
 env/
 venv/
 ENV/
