@@ -16,6 +16,7 @@ def test_build_request_params_uses_configured_mission_window():
     assert params["STOP_TIME"] == CONFIG.mission_end_date
     assert params["COMMAND"] == "301"
     assert params["CENTER"] == "500@399"
+    assert params["STEP_SIZE"] == "'1 h'"
 
 
 def test_build_bronze_record_contains_expected_columns():

@@ -32,7 +32,7 @@ def build_request_params() -> dict[str, str]:
         "CENTER": "500@399",
         "START_TIME": CONFIG.mission_start_date,
         "STOP_TIME": CONFIG.mission_end_date,
-        "STEP_SIZE": "1 h",
+        "STEP_SIZE": "'1 h'",
         "VEC_TABLE": "2",
         "CSV_FORMAT": "YES",
     }
