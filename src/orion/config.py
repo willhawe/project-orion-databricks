@@ -61,6 +61,40 @@ JPL_HORIZONS_BRONZE_COLUMN_TYPES: Final[tuple[tuple[str, str], ...]] = (
     ("mission_end_date", "date"),
 )
 
+DONKI_BRONZE_COLUMNS: Final[tuple[str, ...]] = (
+    "ingestion_run_id",
+    "source_system",
+    "source_endpoint",
+    "event_type",
+    "request_url",
+    "request_params_json",
+    "response_status_code",
+    "response_body",
+    "response_hash",
+    "ingested_at",
+    "ingested_date",
+    "mission_name",
+    "mission_start_date",
+    "mission_end_date",
+)
+
+DONKI_BRONZE_COLUMN_TYPES: Final[tuple[tuple[str, str], ...]] = (
+    ("ingestion_run_id", "string"),
+    ("source_system", "string"),
+    ("source_endpoint", "string"),
+    ("event_type", "string"),
+    ("request_url", "string"),
+    ("request_params_json", "string"),
+    ("response_status_code", "int"),
+    ("response_body", "string"),
+    ("response_hash", "string"),
+    ("ingested_at", "timestamp"),
+    ("ingested_date", "date"),
+    ("mission_name", "string"),
+    ("mission_start_date", "date"),
+    ("mission_end_date", "date"),
+)
+
 
 def full_table_name(schema: str, table_name: str) -> str:
     """
