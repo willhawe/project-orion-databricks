@@ -1,0 +1,92 @@
+resources:
+  jobs:
+    project_orion_medallion_pipeline:
+      name: project-orion-medallion-pipeline-dev
+      max_concurrent_runs: 1
+      performance_target: PERFORMANCE_OPTIMIZED
+      queue:
+        enabled: true
+      environments:
+        - environment_key: Default
+          spec:
+            environment_version: "5"
+      tasks:
+        - task_key: 00_workspace_smoke_test
+          run_if: ALL_SUCCESS
+          environment_key: Default
+          notebook_task:
+            notebook_path: ${workspace.file_path}/notebooks/00_setup/00_workspace_smoke_test.py
+            source: WORKSPACE
+
+        - task_key: 01_create_bronze_tables
+          depends_on:
+            - task_key: 00_workspace_smoke_test
+          run_if: ALL_SUCCESS
+          environment_key: Default
+          notebook_task:
+            notebook_path: ${workspace.file_path}/notebooks/00_setup/01_create_bronze_tables.py
+            source: WORKSPACE
+
+        - task_key: bronze_jpl_horizons
+          depends_on:
+            - task_key: 01_create_bronze_tables
+          run_if: ALL_SUCCESS
+          environment_key: Default
+          notebook_task:
+            notebook_path: ${workspace.file_path}/notebooks/01_bronze_ingestion/01_ingest_jpl_horizons.py
+            source: WORKSPACE
+
+        - task_key: bronze_donki_events
+          depends_on:
+            - task_key: 01_create_bronze_tables
+          run_if: ALL_SUCCESS
+          environment_key: Default
+          notebook_task:
+            notebook_path: ${workspace.file_path}/notebooks/01_bronze_ingestion/02_ingest_donki_events.py
+            source: WORKSPACE
+
+        - task_key: silver_jpl_ephemeris
+          depends_on:
+            - task_key: bronze_jpl_horizons
+          run_if: ALL_SUCCESS
+          environment_key: Default
+          notebook_task:
+            notebook_path: ${workspace.file_path}/notebooks/02_silver_transformation/01_clean_ephemeris.py
+            source: WORKSPACE
+
+        - task_key: silver_donki_space_weather
+          depends_on:
+            - task_key: bronze_donki_events
+          run_if: ALL_SUCCESS
+          environment_key: Default
+          notebook_task:
+            notebook_path: ${workspace.file_path}/notebooks/02_silver_transformation/02_clean_space_weather.py
+            source: WORKSPACE
+
+        - task_key: silver_join_telemetry_weather
+          depends_on:
+            - task_key: silver_jpl_ephemeris
+            - task_key: silver_donki_space_weather
+          run_if: ALL_SUCCESS
+          environment_key: Default
+          notebook_task:
+            notebook_path: ${workspace.file_path}/notebooks/02_silver_transformation/03_join_telemetry_space_weather.py
+            source: WORKSPACE
+
+        - task_key: gold_mission_timeline
+          depends_on:
+            - task_key: silver_join_telemetry_weather
+          run_if: ALL_SUCCESS
+          environment_key: Default
+          notebook_task:
+            notebook_path: ${workspace.file_path}/notebooks/03_gold_serving/01_build_mission_timeline.py
+            source: WORKSPACE
+
+        - task_key: gold_powerbi_tables
+          depends_on:
+            - task_key: gold_mission_timeline
+          run_if: ALL_SUCCESS
+          environment_key: Default
+          notebook_task:
+            notebook_path: ${workspace.file_path}/notebooks/03_gold_serving/02_build_powerbi_tables.py
+            source: WORKSPACE

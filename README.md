@@ -78,11 +78,34 @@ notebooks/03_gold_serving/01_build_mission_timeline.py.ipynb
 notebooks/03_gold_serving/02_build_powerbi_tables.py.ipynb
 ```
 
+## Source-Controlled Workflow
+
+The Databricks Workflow is defined as a Databricks Asset Bundle resource in:
+
+```text
+resources/jobs/orion_medallion_pipeline.yml
+```
+
+Validate the bundle:
+
+```bash
+~/.local/bin/databricks bundle validate -t dev --profile project_orion_databricks
+```
+
+Deploy the workflow from source control:
+
+```bash
+~/.local/bin/databricks bundle deploy -t dev --profile project_orion_databricks
+```
+
+The Cursor extension may bundle its own Databricks CLI. If bundle deploy commands fail with `error downloading Terraform: unable to verify checksums signature: openpgp: key expired`, install and use a patched Databricks CLI version instead of the extension-bundled binary.
+
 ## Repository Layout
 
 ```text
 docs/                  Architecture and development notes
 notebooks/             Databricks setup, Bronze, Silver, and Gold notebooks
+resources/jobs/        Databricks Asset Bundle workflow definitions
 src/orion/             Reusable Python config, ingestion, and transform modules
 tests/                 Local unit tests for pure-Python logic
 workflows/             Workflow definition placeholder
